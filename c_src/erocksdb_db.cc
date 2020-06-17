@@ -402,6 +402,12 @@ ERL_NIF_TERM parse_cf_option(ErlNifEnv* env, ERL_NIF_TERM item, rocksdb::ColumnF
             if (enif_get_int(env, option[1], &max_write_buffer_number))
                 opts.max_write_buffer_number = max_write_buffer_number;
         }
+        else if (option[0] == erocksdb::ATOM_MAX_WRITE_BUFFER_SIZE_TO_MAINTAIN)
+        {
+            int max_write_buffer_size_to_maintain;
+            if (enif_get_int(env, option[1], &max_write_buffer_size_to_maintain))
+                opts.max_write_buffer_size_to_maintain = max_write_buffer_size_to_maintain;
+        }
         else if (option[0] == erocksdb::ATOM_MIN_WRITE_BUFFER_NUMBER_TO_MERGE)
         {
             int min_write_buffer_number_to_merge;
