@@ -75,10 +75,10 @@ cf_iterators_test() ->
 
     ok = rocksdb:transaction_put(Txn, <<"c">>, <<"v1">>),
     ok = rocksdb:transaction_put(Txn, TestH, <<"d">>, <<"v2">>),
-    %% ok = rocksdb:transaction_put(Txn, TestH, <<"e">>, <<"v2">>),
+    ok = rocksdb:transaction_put(Txn, TestH, <<"e">>, <<"v3">>),
 
     {ok, DefaultIt} = rocksdb:transaction_iterator(Db, Txn, []),
-    {ok, TestIt} = rocksdb:transaction_iterator(Db, Txn, TestH, [{iterate_upper_bound, <<"d">>}]),
+    {ok, TestIt} = rocksdb:transaction_iterator(Db, Txn, TestH, [{iterate_upper_bound, <<"e">>}]),
 
     {ok, PlainIt} = rocksdb:iterator(Db, TestH, []),
 
@@ -91,14 +91,20 @@ cf_iterators_test() ->
 
     ?assertEqual({ok, <<"b">>, <<"y1">>}, rocksdb:iterator_move(TestIt, next)),
     ?assertEqual({ok, <<"d">>, <<"v2">>}, rocksdb:iterator_move(TestIt, next)),
-    %% TODO: re-add this part of the test when iterator bounds are fixed
-    %%?assertEqual({ok, <<"e">>, <<"v2">>}, rocksdb:iterator_move(TestIt, next))a,
+    %% If the following line fails in the future after updating the
+    %% rocksdb c++ library, it may mean that bounds on transaction
+    %% iterators have been fixed to honor upper bounds, and this
+    %% should be changed into `assertEqual`.
+    %%
+    %% See:
+    %% - https://github.com/facebook/rocksdb/issues/2343
+    %% - https://github.com/facebook/rocksdb/blob/94d04529def513600c05998af6d6904f40f94124/include/rocksdb/options.h#L1216
+    ?assertNotEqual({error, invalid_iterator}, rocksdb:iterator_move(TestIt, next)),
 
     ?assertEqual({ok, <<"b">>, <<"y1">>}, rocksdb:iterator_move(PlainIt, next)),
     ?assertEqual({error, invalid_iterator}, rocksdb:iterator_move(PlainIt, next)),
 
     ?assertEqual({ok, <<"b">>, <<"y">>}, rocksdb:iterator_move(DefaultIt, prev)),
-    ?assertEqual({ok, <<"b">>, <<"y1">>}, rocksdb:iterator_move(TestIt, prev)),
     ok = rocksdb:iterator_close(TestIt),
     ok = rocksdb:iterator_close(PlainIt),
     ok = rocksdb:iterator_close(DefaultIt),
