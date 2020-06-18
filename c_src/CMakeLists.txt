@@ -73,8 +73,6 @@ if(MSVC)
   set_target_properties(${ErlangRocksDBNIF_TARGET} PROPERTIES OUTPUT_NAME "liberocksdb")
 endif()
 
-set(CMAKE_BUILD_TYPE Release)
-
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 
 option(WITH_CCACHE "Build with ccache." OFF)
@@ -93,6 +91,19 @@ option(WITH_ZSTD "build with zstd" OFF)
 option(WITH_SNAPPY "build with SNAPPY" OFF)
 option(WITH_LZ4 "build with lz4" OFF)
 option(WITH_ZLIB "build with zlib" OFF)
+option(WITH_ASAN "enable address sanitizer" OFF)
+
+#
+# Set a default build type if none was specified
+#
+if(WITH_ASAN)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif()
+set(default_build_type "Release")
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE STRING "Choose the type of build." FORCE)
+endif()
 
 if(WITH_ZLIB)
     find_package(zlib REQUIRED)
@@ -177,6 +188,12 @@ include_directories(${ROCKSDB_INCLUDE_DIRS})
 set_property(TARGET ${ErlangRocksDBNIF_TARGET} PROPERTY CXX_STANDARD 14)
 set_property(TARGET ${ErlangRocksDBNIF_TARGET} PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET ${ErlangRocksDBNIF_TARGET} PROPERTY CXX_EXTENSIONS OFF)
+
+if(WITH_ASAN)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+endif()
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /nologo /EHsc /GS /Gd /GR /GF /fp:precise /Zc:wchar_t /Zc:forScope /errorReport:queue")
