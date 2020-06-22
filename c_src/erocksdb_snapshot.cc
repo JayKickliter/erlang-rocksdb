@@ -42,6 +42,15 @@ Snapshot(
     const rocksdb::Snapshot* snapshot;
 
     // create snapshot
+    //
+    // TODO: this leaks memory
+    //
+    // Direct leak of 64 byte(s) in 1 object(s) allocated from:
+    // #0 in operator new(unsigned long) (/usr/lib/gcc/x86_64-linux-gnu/7/libasan.so+0xe0448)
+    // #1 in rocksdb::DBImpl::GetSnapshotImpl(bool, bool) (erlang-rocksdb/_build/test/lib/rocksdb/priv/liberocksdb.so+0x1f2beb)
+    // #2 in erocksdb::Snapshot(enif_environment_t*, int, unsigned long const*) erlang-rocksdb/c_src/erocksdb_snapshot.cc:45
+    // #3 in process_main x86_64-unknown-linux-gnu/opt/smp/beam_cold.h:119
+    //
     snapshot = db_ptr->m_Db->GetSnapshot();
     snapshot_ptr = SnapshotObject::CreateSnapshotObject(db_ptr.get(), snapshot);
 
